@@ -390,8 +390,8 @@ def parse_formula(formula: str) -> List[List[Union[str, int]]]:
 
 def process(
     composition: List[List[Union[str, int]]],
-    equivalent: float = 1e-6,
-    dump: float = 1e-10,
+    equivalent: float = 1e-8,
+    dump: float = 1e-12,
     normalize: bool = False,
 ) -> List[List[float]]:
     """
