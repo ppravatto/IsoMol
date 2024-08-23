@@ -5,7 +5,7 @@ from os.path import join
 from base import Ui_MainWindow
 from PyQt5 import QtCore, QtGui, QtWidgets
 
-from matplotlib.backends.backend_qt5agg import FigureCanvas
+from matplotlib.backends.backend_qt5agg import FigureCanvas, NavigationToolbar2QT
 from matplotlib.figure import Figure
 
 
@@ -17,9 +17,12 @@ class MplWidget(QtWidgets.QWidget):
         
         self.fig = Figure(dpi=dpi)
         self.canvas = FigureCanvas(self.fig)
+
+        self.toolbar = NavigationToolbar2QT(self.canvas, self)
         
         vertical_layout = QtWidgets.QVBoxLayout()
         vertical_layout.addWidget(self.canvas)
+        vertical_layout.addWidget(self.toolbar)
         
         self.canvas.axes = self.canvas.figure.add_subplot(111)
         self.canvas.figure.tight_layout()
