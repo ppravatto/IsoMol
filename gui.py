@@ -29,10 +29,19 @@ class MplWidget(QtWidgets.QWidget):
 
         self.setLayout(vertical_layout)
     
-    def plot_data(self, masses, intensities):
+    def plot_data(self, masses, intensities, ylogscale = False):
         self.canvas.axes.clear()
         self.canvas.axes.stem(masses, intensities, basefmt="none", markerfmt="none")
-        self.canvas.axes.set_ylim([0, 105])
+
+        if ylogscale:
+            self.canvas.axes.set_yscale("log")
+        else:
+            self.canvas.axes.set_yscale("linear")
+            self.canvas.axes.set_ylim([0, 105])
+        
+        self.canvas.axes.grid(which="major", c="#DDDDDD")
+        self.canvas.axes.grid(which="minor", c="#EEEEEE")
+
         self.canvas.axes.set_xlabel("Mass [amu]")
         self.canvas.axes.set_ylabel("Intensity [a.u.]")
 
@@ -41,6 +50,10 @@ class Ui_IsoMol(Ui_MainWindow):
 
     def setupUi(self, MainWindow):
         super().setupUi(MainWindow)
+
+        self.__masses = []
+        self.__intensities = []
+        self.__ylogscale = False
 
         MainWindow.setFixedSize(MainWindow.size())
 
@@ -61,6 +74,9 @@ class Ui_IsoMol(Ui_MainWindow):
         
         self.exportButton.clicked.connect(self.save_csv)
         self.exportButton.setEnabled(False)
+
+        self.YLogscaleCheckBox.clicked.connect(self.set_ylogscale)
+        self.YLogscaleCheckBox.setEnabled(False)
     
     def retranslateUi(self, MainWindow):
         super().retranslateUi(MainWindow)
@@ -77,6 +93,10 @@ class Ui_IsoMol(Ui_MainWindow):
         self.mplWidget.canvas.draw()
         self.saveButton.setEnabled(False)
         self.exportButton.setEnabled(False)
+        self.YLogscaleCheckBox.setEnabled(False)
+
+        self.__masses = []
+        self.__intensities = []
 
         if self.formulaEdit.text() == "":
             self.computeButton.setEnabled(False)
@@ -107,15 +127,18 @@ class Ui_IsoMol(Ui_MainWindow):
             self.tableWidget.setRowCount(len(peaks))
             for i, (mass, intensity) in enumerate(zip(self.__masses, self.__intensities)):
                 self.tableWidget.setItem(i, 0, QtWidgets.QTableWidgetItem(f"{mass:.6f}"))
-                self.tableWidget.setItem(i, 1, QtWidgets.QTableWidgetItem(f"{intensity:.2f}"))
+                self.tableWidget.setItem(i, 1, QtWidgets.QTableWidgetItem(f"{intensity:.3e}"))
 
-            self.mplWidget.plot_data(self.__masses, self.__intensities)
-            self.mplWidget.canvas.draw()
+            self.update_plot()
 
             self.saveButton.setEnabled(True)
             self.exportButton.setEnabled(True)
+            self.YLogscaleCheckBox.setEnabled(True)
 
-    
+    def update_plot(self):
+        self.mplWidget.plot_data(self.__masses, self.__intensities, self.__ylogscale)
+        self.mplWidget.canvas.draw()
+
     def save_plot(self):
         folder = QtWidgets.QFileDialog.getExistingDirectory(None, 'Select a folder:', '/home', QtWidgets.QFileDialog.ShowDirsOnly)
         self.mplWidget.canvas.figure.savefig(join(folder, f"{self.__formula}.png"), dpi=600)
@@ -125,6 +148,11 @@ class Ui_IsoMol(Ui_MainWindow):
         with open(join(folder, f"{self.__formula}.csv"), "w") as csv:
             for mass, intensity in zip(self.__masses, self.__intensities):
                 csv.write(f"{mass:.10f}, {intensity:.10f}\n")
+    
+    def set_ylogscale(self):
+        self.__ylogscale = self.YLogscaleCheckBox.isChecked()
+        self.update_plot()
+
         
         
 if __name__ == "__main__":
